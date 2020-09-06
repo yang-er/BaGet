@@ -121,6 +121,7 @@ namespace BaGet.Azure
             bool includeSemVer2,
             CancellationToken cancellationToken)
         {
+            searchText = searchText.ToLowerInvariant();
             var query = new TableQuery<PackageEntity>();
             query = query.Where(GenerateSearchFilter(searchText, includePrerelease, includeSemVer2));
             query.TakeCount = 500;
