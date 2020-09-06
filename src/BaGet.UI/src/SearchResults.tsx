@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import './SearchResults.css';
 import DefaultPackageIcon from "./default-package-icon-256x256.png";
 
-const defaultSearchTake = 20;
+const defaultSearchTake = 100;
 
 interface ISearchResultsProps {
   input: string;
@@ -188,7 +188,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
               <div key={value.id} className="row search-result">
                 <div className="col-sm-1 hidden-xs hidden-sm">
                   <img
-                    src={value.iconUrl || DefaultPackageIcon}
+                    src={DefaultPackageIcon}
                     className="package-icon img-responsive"
                     onError={this.loadDefaultIcon}
                     alt="The package icon" />
@@ -196,7 +196,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                 <div className="col-sm-11">
                   <div>
                     <Link to={`/packages/${value.id}`} className="package-title">{value.id}</Link>
-                    <span>by: {value.authors.join(' ')}</span>
+                    <span>by: {value.authors.join(', ')}</span>
                   </div>
                   <ul className="info">
                     <li>
