@@ -6,7 +6,6 @@ import { coerce, eq, gt, SemVer } from 'semver';
 
 import { config } from '../config';
 import Dependencies from './Dependencies';
-import Dependents from './Dependents';
 import { PackageType, InstallationInfo } from './InstallationInfo';
 import LicenseInfo from './LicenseInfo';
 import * as Registration from './Registration';
@@ -250,10 +249,6 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
                 );
               }
             })()}
-
-            <ExpandableSection title="Dependents" expanded={false}>
-              <Dependents packageId={this.state.package.id} />
-            </ExpandableSection>
 
             {this.state.package.releaseNotes &&
               <ExpandableSection title="Release Notes" expanded={false}>
