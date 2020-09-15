@@ -121,41 +121,19 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                   { key: 'netstandard2.1', text: '.NET Standard 2.1' },
                   { key: 'netstandard2.0', text: '.NET Standard 2.0' },
                   { key: 'netstandard1.6', text: '.NET Standard 1.6' },
-                  { key: 'netstandard1.5', text: '.NET Standard 1.5' },
-                  { key: 'netstandard1.4', text: '.NET Standard 1.4' },
-                  { key: 'netstandard1.3', text: '.NET Standard 1.3' },
-                  { key: 'netstandard1.2', text: '.NET Standard 1.2' },
-                  { key: 'netstandard1.1', text: '.NET Standard 1.1' },
-                  { key: 'netstandard1.0', text: '.NET Standard 1.0' },
 
                   { key: 'divider2', text: '-', itemType: SelectableOptionMenuItemType.Divider },
                   { key: 'header2', text: '.NET Core', itemType: SelectableOptionMenuItemType.Header },
 
                   { key: 'netcoreapp3.1', text: '.NET Core 3.1' },
-                  { key: 'netcoreapp3.0', text: '.NET Core 3.0' },
                   { key: 'netcoreapp2.2', text: '.NET Core 2.2' },
                   { key: 'netcoreapp2.1', text: '.NET Core 2.1' },
-                  { key: 'netcoreapp1.1', text: '.NET Core 1.1' },
-                  { key: 'netcoreapp1.0', text: '.NET Core 1.0' },
 
                   { key: 'divider3', text: '-', itemType: SelectableOptionMenuItemType.Divider },
                   { key: 'header3', text: '.NET Framework', itemType: SelectableOptionMenuItemType.Header },
 
                   { key: 'net48', text: '.NET Framework 4.8' },
                   { key: 'net472', text: '.NET Framework 4.7.2' },
-                  { key: 'net471', text: '.NET Framework 4.7.1' },
-                  { key: 'net463', text: '.NET Framework 4.6.3' },
-                  { key: 'net462', text: '.NET Framework 4.6.2' },
-                  { key: 'net461', text: '.NET Framework 4.6.1' },
-                  { key: 'net46', text: '.NET Framework 4.6' },
-                  { key: 'net452', text: '.NET Framework 4.5.2' },
-                  { key: 'net451', text: '.NET Framework 4.5.1' },
-                  { key: 'net45', text: '.NET Framework 4.5' },
-                  { key: 'net403', text: '.NET Framework 4.0.3' },
-                  { key: 'net4', text: '.NET Framework 4' },
-                  { key: 'net35', text: '.NET Framework 3.5' },
-                  { key: 'net2', text: '.NET Framework 2' },
-                  { key: 'net11', text: '.NET Framework 1.1' },
                 ]}
                 />
               </div>
