@@ -21,6 +21,40 @@ namespace BaGet.Hosting
             _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         }
 
+        // GET v3/package/{id}/shields-io.json
+        [HttpGet]
+        [ResponseCache(Duration = 600)]
+        public async Task<IActionResult> ShieldsAsync(string id, CancellationToken cancellationToken)
+        {
+            var index = await _metadata.GetRegistrationIndexOrNullAsync(id, cancellationToken);
+            if (index == null || index.Count != 1) return NotFound();
+            var packageInfo = index.Pages[0];
+
+            string releaseVersion;
+            string packageName;
+
+            if (packageInfo.ItemsOrNull == null || packageInfo.ItemsOrNull.Count == 0)
+            {
+                releaseVersion = packageInfo.Upper;
+                packageName = id;
+            }
+            else
+            {
+                var upper = packageInfo.ItemsOrNull[packageInfo.Count - 1].PackageMetadata;
+                packageName = upper.PackageId;
+                releaseVersion = upper.Version;
+            }
+
+            return new ObjectResult(new
+            {
+                schemaVersion = 1,
+                label = packageName,
+                message = releaseVersion,
+                color = NuGetVersion.Parse(releaseVersion).IsPrerelease ? "yellow" : "blue",
+                cacheSeconds = 600,
+            });
+        }
+
         // GET v3/registration/{id}.json
         [HttpGet]
         public async Task<ActionResult<BaGetRegistrationIndexResponse>> RegistrationIndexAsync(string id, CancellationToken cancellationToken)

@@ -12,6 +12,7 @@ namespace BaGet.Hosting
         public const string DependentsRouteName = "dependents";
         public const string RegistrationIndexRouteName = "registration-index";
         public const string RegistrationLeafRouteName = "registration-leaf";
+        public const string PackageShieldsRouteName = "package-shields-io";
         public const string PackageVersionsRouteName = "package-versions";
         public const string PackageDownloadRouteName = "package-download";
         public const string PackageDownloadManifestRouteName = "package-download-manifest";

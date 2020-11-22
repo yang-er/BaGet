@@ -87,6 +87,11 @@ namespace BaGet
         public void MapPackageMetadataRoutes(IEndpointRouteBuilder endpoints)
         {
             endpoints.MapControllerRoute(
+                name: Routes.PackageShieldsRouteName,
+                pattern: "v3/package/{id}/shields-io.json",
+                defaults: new { controller = "PackageMetadata", action = "Shields" });
+
+            endpoints.MapControllerRoute(
                name: Routes.RegistrationIndexRouteName,
                pattern: "v3/registration/{id}/index.json",
                defaults: new { controller = "PackageMetadata", action = "RegistrationIndex" });
