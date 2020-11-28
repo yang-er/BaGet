@@ -21,7 +21,7 @@ namespace BaGet.Azure
             Task.FromResult(new DependentsResponse
             {
                 TotalHits = 0,
-                Data = EmptyStringList
+                Data = new List<DependentResult>()
             });
 
         private readonly CloudTable _table;
@@ -97,10 +97,8 @@ namespace BaGet.Azure
             };
         }
 
-        public Task<AutocompleteResponse> ListPackageVersionsAssync(
-            string packageId,
-            bool includePrerelease,
-            bool includeSemVer2,
+        public Task<AutocompleteResponse> ListPackageVersionsAsync(
+            VersionsRequest request,
             CancellationToken cancellationToken)
         {
             // TODO: Support versions autocomplete.

@@ -24,7 +24,7 @@ namespace BaGet.Core
             Task.FromResult(new DependentsResponse
             {
                 TotalHits = 0,
-                Data = EmptyStringList
+                Data = new List<DependentResult>()
             });
 
         private static readonly Task<SearchResponse> EmptySearchResponseTask =
@@ -41,10 +41,8 @@ namespace BaGet.Core
             return EmptyAutocompleteResponseTask;
         }
 
-        public Task<AutocompleteResponse> ListPackageVersionsAssync(
-            string packageId,
-            bool includePrerelease,
-            bool includeSemVer2,
+        public Task<AutocompleteResponse> ListPackageVersionsAsync(
+            VersionsRequest request,
             CancellationToken cancellationToken)
         {
             return EmptyAutocompleteResponseTask;
