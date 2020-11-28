@@ -136,10 +136,8 @@ namespace BaGet.Azure
             };
         }
 
-        public Task<AutocompleteResponse> ListPackageVersionsAssync(
-            string packageId,
-            bool includePrerelease,
-            bool includeSemVer2,
+        public Task<AutocompleteResponse> ListPackageVersionsAsync(
+            VersionsRequest request,
             CancellationToken cancellationToken)
         {
             // TODO: Support versions autocomplete.
@@ -163,7 +161,12 @@ namespace BaGet.Azure
 
             var response = await _searchClient.Documents.SearchAsync<PackageDocument>(query, parameters, cancellationToken: cancellationToken);
             var results = response.Results
-                .Select(r => r.Document.Id)
+                .Select(r => new DependentResult
+                {
+                    Id = r.Document.Id,
+                    Description = r.Document.Description,
+                    TotalDownloads = r.Document.TotalDownloads
+                })
                 .ToList()
                 .AsReadOnly();
 
