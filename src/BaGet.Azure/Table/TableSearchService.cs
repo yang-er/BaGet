@@ -233,7 +233,6 @@ namespace BaGet.Azure
 
         private SearchResult ToSearchResult(IReadOnlyList<PackageEntity> packages)
         {
-            DateTime? latestTime = null;
             NuGetVersion latestVersion = null;
             PackageEntity latest = null;
             var versions = new List<SearchResultVersion>();
@@ -251,10 +250,9 @@ namespace BaGet.Azure
                     Downloads = package.Downloads,
                 });
 
-                if (latestTime == null || package.Published > latestTime)
+                if (latestVersion == null || version > latestVersion)
                 {
                     latest = package;
-                    latestTime = package.Published;
                     latestVersion = version;
                 }
             }
