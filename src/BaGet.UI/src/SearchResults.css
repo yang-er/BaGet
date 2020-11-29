@@ -73,3 +73,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.page-bottom-4rem {
+  margin-bottom: 4rem;
+}

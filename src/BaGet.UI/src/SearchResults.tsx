@@ -84,7 +84,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
       this.state.items.length === this.state.page * defaultSearchTake;
 
     return (
-      <div>
+      <div className="page-bottom-4rem">
         <form className="search-options form-inline">
           <div className="form-group">
             <label>Package Type:</label>
