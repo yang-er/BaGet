@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 
 import './Versions.css';
 import { config } from '../config';
+import { Spinner } from 'office-ui-fabric-react';
 
 export interface IPackageVersion {
   version: string;
@@ -11,6 +12,8 @@ export interface IPackageVersion {
   date: Date;
   selected: boolean;
   listed: boolean;
+  latest: boolean;
+  id?: string;
 }
 
 interface IVersionsProps {
@@ -79,8 +82,8 @@ export class Versions extends React.Component<IVersionsProps, IVersionsState> {
     return (
       <tr key={packageVersion.version} className={className}>
         <td><Link to={`/packages/${this.props.packageId}/${packageVersion.version}`}>{packageVersion.version}</Link></td>
-        <td>{packageVersion.downloads || 'N/A'}</td>
-        <td>{this.dateToString(packageVersion.date)}</td>
+        <td>{packageVersion.downloads === undefined ? <Spinner className="put-left" /> : packageVersion.downloads.toLocaleString()}</td>
+        <td>{this.dateToString(packageVersion.date) || <Spinner className="put-left" />}</td>
       </tr>
     );
   }
@@ -111,6 +114,10 @@ export class Versions extends React.Component<IVersionsProps, IVersionsState> {
   private showFewerVersions = () => this.setState({ showAll: false });
 
   private dateToString(date: Date): string {
-    return date.toLocaleDateString();
+    if (date === undefined) {
+      return undefined;
+    } else {
+      return date.toLocaleDateString();
+    }
   }
 }
