@@ -100,7 +100,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
   }
 
   public componentDidMount() {
-    const url = `${config.azureArtifactsUrl}/v3/registrations2/${this.id}/index.json`;
+    const url = `${config.getNuGetServiceUrl()}/v3/registrations2/${this.id}/index.json`;
 
     fetch(url, {signal: this.registrationController.signal}).then(response => {
       return (response.ok) ? response.json() : null;
@@ -118,11 +118,14 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
       let currentItem: Registration.IRegistrationPageItem | undefined;
       let lastUpdate: Date | undefined;
 
-      const latestVersion = this.latestVersion(results);
+      const anyListed = this.anyListed(results);
+      const latestVersion = this.latestVersion(results, anyListed);
       const versions: IPackageVersion[] = [];
 
       for (const entry of results.items[0].items) {
-        if (!entry.catalogEntry.listed) continue;
+        if (anyListed && !entry.catalogEntry.listed) {
+          console.log('unlisted '.concat(entry.catalogEntry.version));
+        }
 
         const normalizedVersion = this.normalizeVersion(entry.catalogEntry.version);
         const coercedVersion = coerce(entry.catalogEntry.version);
@@ -138,6 +141,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           downloads: entry.catalogEntry.downloads,
           version: normalizedVersion,
           selected: isCurrent,
+          listed: entry.catalogEntry.listed,
         });
 
         if (isCurrent) {
@@ -178,7 +182,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
         });
 
         if (currentItem.catalogEntry.hasReadme) {
-          const readmeUrl = `${config.apiUrl}/v3/package/${this.id}/${currentItem.catalogEntry.version}/readme`;
+          const readmeUrl = `${config.getNuGetServiceUrl()}/v3/flat2/${this.id}/${currentItem.catalogEntry.version}/readme`;
 
           fetch(readmeUrl, {signal: this.readmeController.signal}).then(response => {
             return response.text();
@@ -332,10 +336,18 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
       : version.substring(0, buildMetadataStart);
   }
 
-  private latestVersion(index: Registration.IRegistrationIndex): SemVer | null {
+  private anyListed(index: Registration.IRegistrationIndex): boolean {
+    for (const entry of index.items[0].items) {
+      if (entry.catalogEntry.listed) return true;
+    }
+
+    return false;
+  }
+
+  private latestVersion(index: Registration.IRegistrationIndex, shouldListed: boolean): SemVer | null {
     let latestVersion: SemVer | null = null;
     for (const entry of index.items[0].items) {
-      if (!entry.catalogEntry.listed) continue;
+      if (shouldListed && !entry.catalogEntry.listed) continue;
 
       let entryVersion = coerce(entry.catalogEntry.version);
       if (!!entryVersion) {

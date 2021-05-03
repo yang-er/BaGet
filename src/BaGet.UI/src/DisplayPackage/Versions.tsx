@@ -10,6 +10,7 @@ export interface IPackageVersion {
   downloads: number;
   date: Date;
   selected: boolean;
+  listed: boolean;
 }
 
 interface IVersionsProps {
@@ -65,9 +66,15 @@ export class Versions extends React.Component<IVersionsProps, IVersionsState> {
   }
 
   private renderVersion = (packageVersion: IPackageVersion) => {
-    const className = packageVersion.selected
+    const className1 = packageVersion.selected
       ? "bg-info"
       : "";
+
+    const className2 = packageVersion.listed
+      ? ""
+      : "unlisted";
+
+    const className = className1.concat(' ').concat(className2).trim();
 
     return (
       <tr key={packageVersion.version} className={className}>

@@ -97,9 +97,10 @@ namespace BaGet
 
             app.UseEndpoints(endpoints =>
             {
-                var api = new BaGetApi();
-
-                api.MapRoutes(endpoints);
+                endpoints.MapControllerRoute(
+                    name: Routes.PackageShieldsRouteName,
+                    pattern: "v3/package/{id}/shields-io.json",
+                    defaults: new { controller = "PackageMetadata", action = "Shields" });
             });
 
             app.UseSpa(spa =>

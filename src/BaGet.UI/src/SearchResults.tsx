@@ -361,7 +361,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
       .map(k => `${k}=${encodeURIComponent(parameters[k])}`)
       .join('&');
 
-    return `${config.azureArtifactsUrl}/v3/query2/?${queryString}`;
+    return `${config.getNuGetServiceUrl()}/v3/query2/?${queryString}`;
   }
 
   private loadDefaultIcon = (e: React.SyntheticEvent<HTMLImageElement>) => {

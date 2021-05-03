@@ -1,6 +1,9 @@
 let config = {
   apiUrl: "__BAGET_PLACEHOLDER_API_URL__",
-  azureArtifactsUrl: "https://pkgs.dev.azure.com/tlylz/5f8d36de-7004-4c36-a8b5-8a4bda9eb598/_packaging/c2949ad7-bda3-4f23-a41b-3109c9419cb7/nuget",
+  organizationId: "tlylz",
+  projectId: "5f8d36de-7004-4c36-a8b5-8a4bda9eb598",
+  feedId: "c2949ad7-bda3-4f23-a41b-3109c9419cb7",
+  getNuGetServiceUrl: (): string => `https://pkgs.dev.azure.com/${config.organizationId}/${config.projectId}/_packaging/${config.feedId}/nuget`,
   reverseVersionArray: false
 };
 
