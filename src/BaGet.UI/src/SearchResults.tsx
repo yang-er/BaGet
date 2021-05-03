@@ -159,11 +159,8 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
               <div>
                 <h2>Oops, nothing here...</h2>
                 <p>
-                  It looks like there's no package here to see. Take a look below for useful links.
+                  It looks like there's no package here to see.
                 </p>
-                <p><Link to="/upload">Upload a package</Link></p>
-                <p><a href="https://loic-sharma.github.io/BaGet/" target="_blank" rel="noopener noreferrer">BaGet documentation</a></p>
-                <p><a href="https://github.com/loic-sharma/BaGet/issues" target="_blank" rel="noopener noreferrer">BaGet issues</a></p>
               </div>
             );
           } else {
@@ -173,7 +170,6 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                   <img
                     src={DefaultPackageIcon}
                     className="package-icon img-responsive"
-                    onError={this.loadDefaultIcon}
                     alt="The package icon" />
                 </div>
                 <div className="col-sm-11">
@@ -185,7 +181,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                     <li>
                       <span>
                         <Icon iconName="Download" className="ms-Icon" />
-                        {value.totalDownloads.toLocaleString()} total downloads
+                        {value.totalDownloads || 'N/A'} total downloads
                       </span>
                     </li>
                     <li>
@@ -365,7 +361,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
       .map(k => `${k}=${encodeURIComponent(parameters[k])}`)
       .join('&');
 
-    return `${config.apiUrl}/v3/search?${queryString}`;
+    return `${config.azureArtifactsUrl}/v3/query2/?${queryString}`;
   }
 
   private loadDefaultIcon = (e: React.SyntheticEvent<HTMLImageElement>) => {

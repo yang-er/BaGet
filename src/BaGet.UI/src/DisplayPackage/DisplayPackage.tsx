@@ -100,7 +100,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
   }
 
   public componentDidMount() {
-    const url = `${config.apiUrl}/v3/registration/${this.id}/index.json`;
+    const url = `${config.azureArtifactsUrl}/v3/registrations2/${this.id}/index.json`;
 
     fetch(url, {signal: this.registrationController.signal}).then(response => {
       return (response.ok) ? response.json() : null;
@@ -208,17 +208,15 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           <h2>Oops, package not found...</h2>
           <p>Could not find package '{this.id}'.</p>
           <p>You can try searching on <a href={`https://www.nuget.org/packages?q=${this.id}`} target="_blank" rel="noopener noreferrer">nuget.org</a> package.</p>
-          <p>Think there's a problem? Consider taking a look at our <a href="https://loic-sharma.github.io/BaGet/" target="_blank" rel="noopener noreferrer">documentation</a> or asking for help on our <a href="https://github.com/loic-sharma/BaGet/issues" target="_blank" rel="noopener noreferrer">GitHub project</a></p>
         </div>
       );
     } else {
       return (
-        <div className="row display-package">
-          <aside className="col-sm-1 package-icon">
+        <div className="row display-package page-bottom-4em">
+          <aside className="col-sm-1 package-icon hidden-xs">
             <img
-              src={this.state.package.iconUrl || DefaultPackageIcon}
+              src={DefaultPackageIcon}
               className="img-responsive"
-              onError={this.loadDefaultIcon}
               alt="The package icon" />
           </aside>
           <article className="col-sm-8 package-details-main">
@@ -294,20 +292,29 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
               <ul className="list-unstyled ms-Icon-ul">
                 <li>
                   <Icon iconName="Download" className="ms-Icon" />
-                  {this.state.package.totalDownloads.toLocaleString()} total downloads
+                  {this.state.package.totalDownloads || 'N/A'} total downloads
                 </li>
                 <li>
                   <Icon iconName="GiftBox" className="ms-Icon" />
-                  {this.state.package.downloads.toLocaleString()} downloads of latest version
+                  {this.state.package.downloads || 'N/A'} downloads of latest version
                 </li>
               </ul>
             </div>
 
+            {this.state.package.authors &&
             <div>
               <h2>Authors</h2>
 
-              <p>{(!this.state.package.authors) ? 'Unknown' : this.state.package.authors}</p>
+              <ul className="list-unstyled ms-Icon-ul">
+                {this.state.package.authors.split(',').map((author) => (
+                <li>
+                  <Icon iconName="Contact" className="ms-Icon" />
+                  {author}
+                </li>
+                ))}
+              </ul>
             </div>
+            }
           </aside>
         </div>
       );

@@ -1,5 +1,7 @@
 let config = {
-  apiUrl: "__BAGET_PLACEHOLDER_API_URL__"
+  apiUrl: "__BAGET_PLACEHOLDER_API_URL__",
+  azureArtifactsUrl: "https://pkgs.dev.azure.com/tlylz/5f8d36de-7004-4c36-a8b5-8a4bda9eb598/_packaging/c2949ad7-bda3-4f23-a41b-3109c9419cb7/nuget",
+  reverseVersionArray: false
 };
 
 // When runing `npm test` react-script automaticaly set this env variable

@@ -3,6 +3,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'react-router-dom';
 
 import './Versions.css';
+import { config } from '../config';
 
 export interface IPackageVersion {
   version: string;
@@ -34,7 +35,11 @@ export class Versions extends React.Component<IVersionsProps, IVersionsState> {
     // We clone the versions array to avoid modifying the props.
     // This assumes the versions are ordered by semver ascendingly.
     let versionsToRender = [...this.props.versions];
-    versionsToRender.reverse();
+
+    if (config.reverseVersionArray) {
+      versionsToRender.reverse();
+    }
+
     if (!this.state.showAll) {
       versionsToRender = versionsToRender.slice(0, Versions.defaultVisible);
     }
@@ -67,7 +72,7 @@ export class Versions extends React.Component<IVersionsProps, IVersionsState> {
     return (
       <tr key={packageVersion.version} className={className}>
         <td><Link to={`/packages/${this.props.packageId}/${packageVersion.version}`}>{packageVersion.version}</Link></td>
-        <td>{packageVersion.downloads}</td>
+        <td>{packageVersion.downloads || 'N/A'}</td>
         <td>{this.dateToString(packageVersion.date)}</td>
       </tr>
     );
