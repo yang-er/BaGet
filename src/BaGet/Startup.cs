@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using BaGet.Core;
 using BaGet.Hosting;
 using Microsoft.AspNetCore.Builder;
@@ -101,6 +102,12 @@ namespace BaGet
                     name: Routes.PackageShieldsRouteName,
                     pattern: "v3/package/{id}/shields-io.json",
                     defaults: new { controller = "PackageMetadata", action = "Shields" });
+
+                endpoints.Map("/v3/index.json", context =>
+                {
+                    context.Response.Redirect("https://pkgs.dev.azure.com/tlylz/namomo/_packaging/namofun/nuget/v3/index.json", true);
+                    return Task.CompletedTask;
+                });
             });
 
             app.UseSpa(spa =>
