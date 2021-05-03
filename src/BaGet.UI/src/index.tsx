@@ -20,7 +20,7 @@ ReactDOM.render(
     <App>
       <Route path="/packages/:id/:version?" component={DisplayPackage} />
 
-      <Route path="/upload" component={Upload} />
+      <Route path="/connect" component={Upload} />
     </App>
   </Router>,
   document.getElementById('root') as HTMLElement

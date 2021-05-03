@@ -43,10 +43,10 @@ class App extends React.Component<RouteComponentProps, IAppState> {
             <div id="navbar" className="col-sm-12">
               <ul className="nav navbar-nav" role="tablist">
                 <li role="presentation"><NavLink to="/" exact={true} role="tab"><span>Packages</span></NavLink></li>
-                <li role="presentation"><NavLink to="/upload"><span>Upload</span></NavLink></li>
+                <li role="presentation"><NavLink to="/connect"><span>Connect</span></NavLink></li>
                 <li role="presentation">
-                  <a role="tab" href="https://loic-sharma.github.io/BaGet/" target="_blank" rel="noopener noreferrer">
-                    <span>Documentation</span>
+                  <a role="tab" href="https://dev.azure.com/tlylz/namomo/_packaging?_a=feed&amp;feed=namofun%40Release" rel="noopener noreferrer">
+                    <span>Feed</span>
                   </a>
                 </li>
               </ul>
