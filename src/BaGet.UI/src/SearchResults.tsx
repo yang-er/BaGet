@@ -1,6 +1,6 @@
 import { config } from './config';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Checkbox, Dropdown, IDropdownOption, SelectableOptionMenuItemType } from 'office-ui-fabric-react/lib/index';
+import { Checkbox, Dropdown, IDropdownOption, SelectableOptionMenuItemType, Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/index';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import './SearchResults.css';
@@ -24,8 +24,6 @@ interface IPackage {
 
 interface ISearchResultsState {
   includePrerelease: boolean;
-  packageType: string;
-  targetFramework: string;
   page: number;
   items: IPackage[];
   loading: boolean;
@@ -44,8 +42,6 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
 
     this.state = {
       includePrerelease: true,
-      packageType: 'any',
-      targetFramework: 'any',
       page: 1,
       items: [],
       loading: false
@@ -55,9 +51,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
   public componentDidMount() {
     this.loadItems(
       this.props.input,
-      this.state.includePrerelease,
-      this.state.packageType,
-      this.state.targetFramework);
+      this.state.includePrerelease);
   }
 
   public componentWillUnmount() {
@@ -73,88 +67,18 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
 
     this.loadItems(
       this.props.input,
-      this.state.includePrerelease,
-      this.state.packageType,
-      this.state.targetFramework);
+      this.state.includePrerelease);
   }
 
   public render() {
-    let noResultsFound = !this.state.loading && this.state.items.length === 0;
-    let showLoadMore = !this.state.loading &&
-      this.state.items.length === this.state.page * defaultSearchTake;
-
-    return (
+    return this.state.loading && this.state.items.length === 0 ? (
+      <div className="dy-5 main-container">
+        <Spinner size={SpinnerSize.large} label="Loading package information..." />
+      </div>
+    ) : (
       <div className="page-bottom-4rem">
-        <form className="search-options form-inline">
-          <div className="form-group">
-            <label>Package Type:</label>
-
-            <div className="search-dropdown">
-              <Dropdown
-                defaultSelectedKey={this.state.packageType}
-                dropdownWidth={200}
-                onChange={this.onChangePackageType}
-                options={[
-                  {key: 'any', text: 'Any'},
-                  {key: 'dependency', text: 'Dependency'},
-                  {key: 'dotnettool', text: '.NET Tool'},
-                  {key: 'template', text: '.NET Template'},
-                ]}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Framework:</label>
-
-            <div className="search-dropdown">
-              <Dropdown
-                defaultSelectedKey={this.state.targetFramework}
-                dropdownWidth={200}
-                onChange={this.onChangeFramework}
-                options={[
-                  { key: 'any', text: 'Any' },
-
-                  { key: 'divider1', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-                  { key: 'header1', text: '.NET', itemType: SelectableOptionMenuItemType.Header },
-
-                  { key: 'net5.0', text: '.NET 5.0' },
-
-                  { key: 'divider2', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-                  { key: 'header2', text: '.NET Standard', itemType: SelectableOptionMenuItemType.Header },
-
-                  { key: 'netstandard2.1', text: '.NET Standard 2.1' },
-                  { key: 'netstandard2.0', text: '.NET Standard 2.0' },
-                  { key: 'netstandard1.6', text: '.NET Standard 1.6' },
-
-                  { key: 'divider3', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-                  { key: 'header3', text: '.NET Core', itemType: SelectableOptionMenuItemType.Header },
-
-                  { key: 'netcoreapp3.1', text: '.NET Core 3.1' },
-                  { key: 'netcoreapp2.2', text: '.NET Core 2.2' },
-                  { key: 'netcoreapp2.1', text: '.NET Core 2.1' },
-
-                  { key: 'divider4', text: '-', itemType: SelectableOptionMenuItemType.Divider },
-                  { key: 'header4', text: '.NET Framework', itemType: SelectableOptionMenuItemType.Header },
-
-                  { key: 'net48', text: '.NET Framework 4.8' },
-                  { key: 'net472', text: '.NET Framework 4.7.2' },
-                ]}
-                />
-              </div>
-          </div>
-          <div className="form-group">
-            <Checkbox
-              defaultChecked={this.state.includePrerelease}
-              onChange={this.onChangePrerelease}
-              label="Include prerelease:"
-              boxSide="end"
-            />
-          </div>
-        </form>
-
         {(() => {
-          if (noResultsFound) {
+          if (!this.state.loading && this.state.items.length === 0) {
             return (
               <div>
                 <h2>Oops, nothing here...</h2>
@@ -208,34 +132,31 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
           }
         })()}
 
-        {showLoadMore &&
+        {this.state.items.length === this.state.page * defaultSearchTake &&
           <div className="row text-center">
             <div className="col-sm-12">
               <h3>
-                <button type="button" onClick={this.loadMore} className="link-button">
-                  <span>Load more...</span>
-                </button>
+                {!this.state.loading
+                  ? <button type="button" onClick={this.loadMore} className="link-button">
+                      <span>Load more...</span>
+                    </button>
+                  : <Spinner size={SpinnerSize.large} label="Loading more..." labelPosition="right" />}
               </h3>
             </div>
           </div>
         }
-
       </div>
     );
   }
 
   private loadItems(
     query: string,
-    includePrerelease: boolean,
-    packageType: string,
-    targetFramework: string
+    includePrerelease: boolean
   ): void {
     const url = this.buildUrl(
       query,
       0,
       includePrerelease,
-      packageType,
-      targetFramework
     );
 
     let resetItems = () =>
@@ -243,8 +164,6 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         page: 1,
         items: [],
         includePrerelease: includePrerelease,
-        packageType: packageType,
-        targetFramework: targetFramework,
         loading: true,
       });
 
@@ -253,8 +172,6 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         page: 1,
         items: results.data,
         includePrerelease: includePrerelease,
-        packageType: packageType,
-        targetFramework: targetFramework,
         loading: false,
       });
 
@@ -265,9 +182,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
     const url = this.buildUrl(
       this.props.input,
       this.state.page * defaultSearchTake,
-      this.state.includePrerelease,
-      this.state.packageType,
-      this.state.targetFramework);
+      this.state.includePrerelease);
 
     let showLoading = () =>
       this.setState({
@@ -280,8 +195,6 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         page: this.state.page + 1,
         items: this.state.items.concat(results.data),
         includePrerelease: this.state.includePrerelease,
-        packageType: this.state.packageType,
-        targetFramework: this.state.targetFramework,
         loading: false
       });
 
@@ -328,9 +241,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
   private buildUrl(
     query: string,
     skip: number,
-    includePrerelease: boolean,
-    packageType?: string,
-    targetFramework?: string
+    includePrerelease: boolean
   ): string {
     const parameters: { [parameter: string]: string } = {
       semVerLevel: "2.0.0",
@@ -349,14 +260,6 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
       parameters.prerelease = 'true';
     }
 
-    if (packageType && packageType !== 'any') {
-      parameters.packageType = packageType;
-    }
-
-    if (targetFramework && targetFramework !== 'any') {
-      parameters.framework = targetFramework;
-    }
-
     const queryString = Object.keys(parameters)
       .map(k => `${k}=${encodeURIComponent(parameters[k])}`)
       .join('&');
@@ -368,28 +271,10 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
     e.currentTarget.src = DefaultPackageIcon;
   }
 
-  private onChangePackageType = (e: React.FormEvent<HTMLDivElement>, option?: IDropdownOption) : void => {
-    this.loadItems(
-      this.props.input,
-      this.state.includePrerelease,
-      (option) ? option.key.toString() : 'any',
-      this.state.targetFramework);
-  }
-
-  private onChangeFramework = (e: React.FormEvent<HTMLDivElement>, option?: IDropdownOption) : void => {
-    this.loadItems(
-      this.props.input,
-      this.state.includePrerelease,
-      this.state.packageType,
-      option!.key.toString());
-  }
-
   private onChangePrerelease = () : void => {
     this.loadItems(
       this.props.input,
-      !this.state.includePrerelease,
-      this.state.packageType,
-      this.state.targetFramework);
+      !this.state.includePrerelease);
   }
 
   private loadMore = () : void => this.loadMoreItems();
