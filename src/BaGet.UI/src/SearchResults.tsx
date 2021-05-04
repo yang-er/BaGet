@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import './SearchResults.css';
 import DefaultPackageIcon from "./default-package-icon-256x256.png";
+import timeago from 'timeago.js';
 
 const defaultSearchTake = 100;
 
@@ -14,12 +15,33 @@ interface ISearchResultsProps {
 
 interface IPackage {
   id: string;
-  authors: string[];
   totalDownloads: number;
   version: string;
-  tags: string[];
+  publishDate: Date;
   description: string;
-  iconUrl: string;
+}
+
+interface PackageMetric {
+  packageId: string;
+  downloadCount: number;
+  downloadUniqueUsers: number;
+}
+
+interface ResultVersion {
+  id: string;
+  normalizedVersion: string;
+  version: string;
+  isLatest: boolean;
+  isListed: boolean;
+  packageDescription: string;
+  publishDate: string;
+}
+
+interface ResultPackage {
+  id: string;
+  normalizedName: string;
+  name: string;
+  versions: ResultVersion[];
 }
 
 interface ISearchResultsState {
@@ -99,29 +121,26 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                 <div className="col-sm-11">
                   <div>
                     <Link to={`/packages/${value.id}`} className="package-title">{value.id}</Link>
-                    <span>by: {value.authors.join(', ')}</span>
                   </div>
                   <ul className="info">
                     <li>
                       <span>
                         <Icon iconName="Download" className="ms-Icon" />
-                        {value.totalDownloads || 'N/A'} total downloads
+                        &nbsp;{value.totalDownloads === undefined ? 'N/A' : value.totalDownloads.toLocaleString()} total downloads
+                      </span>
+                    </li>
+                    <li>
+                      <span>
+                        <Icon iconName="History" className="ms-Icon" />
+                        &nbsp;last updated {timeago().format(value.publishDate)}
                       </span>
                     </li>
                     <li>
                       <span>
                         <Icon iconName="Flag" className="ms-Icon" />
-                        Latest version: {value.version}
+                        &nbsp;Latest version: {value.version}
                       </span>
                     </li>
-                    {value.tags.length > 0 &&
-                      <li>
-                        <span className="tags">
-                          <Icon iconName="Tag" className="ms-Icon" />
-                          {value.tags.join(' ')}
-                        </span>
-                      </li>
-                    }
                   </ul>
                   <div>
                     {value.description}
@@ -198,10 +217,10 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         loading: false
       });
 
-      this.fetchSearchResults(
-        url,
-        showLoading,
-        addPage);
+    this.fetchSearchResults(
+      url,
+      showLoading,
+      addPage);
   }
 
   private fetchSearchResults(
@@ -218,17 +237,41 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
     onStart();
 
     fetch(url, {signal: this.resultsController.signal}).then(response => {
-      return response.ok
-        ? response.json()
-        : null;
+      return response.ok ? response.json() : null;
     }).then(resultsJson => {
-      if (!resultsJson) {
-        return;
+      if (!resultsJson) return;
+
+      const results = resultsJson as { value: ResultPackage[] };
+      const response : ISearchResponse = { data: [] };
+      const guidMap : { [parameter: string]: IPackage } = {};
+
+      for (const entry of results.value) {
+        const datum : IPackage = {
+          description: entry.versions[0].packageDescription,
+          id: entry.name,
+          version: entry.versions[0].version,
+          publishDate: this.normalizeDate(entry.versions[0].publishDate),
+          totalDownloads: 0,
+        };
+
+        response.data.push(datum);
+        guidMap[entry.id] = datum;
       }
 
-      const results = resultsJson as ISearchResponse;
+      const metricQuery = this.createPost(this.resultsController.signal, {packageIds: Object.keys(guidMap)});
+      fetch(config.getMetricUrl(), metricQuery).then(response => {
+        return response.ok ? response.json() : null;
+      }).then(resultsJson => {
 
-      onComplete(results);
+        if (resultsJson) {
+          const results = resultsJson as PackageMetric[];
+          for (const entry of results) {
+            guidMap[entry.packageId].totalDownloads = entry.downloadCount;
+          }
+        }
+
+        onComplete(response);
+      });
     })
     .catch((e) => {
       var ex = e as DOMException;
@@ -238,43 +281,63 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
     });
   }
 
+  private normalizeDate(original: string) : Date {
+    if (original === undefined) {
+      return undefined;
+    } else if (original.startsWith('/Date(')) {
+      return new Date(parseInt(original.substr(6, 13)));
+    } else {
+      return new Date(original);
+    }
+  }
+
+  private createPost(signal: AbortSignal, body: object) : RequestInit {
+    return {
+      signal: signal,
+      method: 'POST',
+      mode: 'cors',
+      body: JSON.stringify(body),
+
+      headers: (() => {
+        let header = new Headers();
+        header.append('Accept', 'application/json;api-version=5.0-preview.1;excludeUrls=true;enumsAsNumbers=true;msDateFormat=true;noArrayWrap=true');
+        header.append('Content-Type', 'application/json');
+        return header;
+      })(),
+    };
+  }
+
   private buildUrl(
     query: string,
     skip: number,
     includePrerelease: boolean
   ): string {
     const parameters: { [parameter: string]: string } = {
-      semVerLevel: "2.0.0",
-      take: defaultSearchTake.toString()
+      includeDescription: 'true',
+      $top: defaultSearchTake.toString(),
+      includeDeleted: 'false',
+      isListed: 'true',
+      protocolType: 'NuGet',
+      'api-version': '6.0-preview.1',
     };
 
     if (query && query.length !== 0) {
-      parameters.q = query;
+      parameters.packageNameQuery = query;
     }
 
     if (skip !== 0) {
-      parameters.skip = skip.toString();
+      parameters.$skip = skip.toString();
     }
 
-    if (includePrerelease) {
-      parameters.prerelease = 'true';
+    if (!includePrerelease) {
+      parameters.isRelease = 'true';
     }
 
     const queryString = Object.keys(parameters)
       .map(k => `${k}=${encodeURIComponent(parameters[k])}`)
       .join('&');
 
-    return `${config.getNuGetServiceUrl()}/v3/query2/?${queryString}`;
-  }
-
-  private loadDefaultIcon = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    e.currentTarget.src = DefaultPackageIcon;
-  }
-
-  private onChangePrerelease = () : void => {
-    this.loadItems(
-      this.props.input,
-      !this.state.includePrerelease);
+    return `${config.getAdoRestfulUrl()}?${queryString}`;
   }
 
   private loadMore = () : void => this.loadMoreItems();
