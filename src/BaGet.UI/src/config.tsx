@@ -26,7 +26,7 @@ if (config.apiUrl.endsWith('/')) {
   config.apiUrl = config.apiUrl.slice(0, -1);
 }
 
-interface ContributionHierarchyQuery {
+export interface ContributionHierarchyQuery {
   contributionIds: string[],
   dataProviderContext: {
     properties: {
@@ -64,4 +64,4 @@ function QueryHierarchy(parameters: { [key: string]: string }) : ContributionHie
   }
 }
 
-export { config, ContributionHierarchyQuery, QueryHierarchy };
+export { config, QueryHierarchy };
