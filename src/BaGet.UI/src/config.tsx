@@ -39,7 +39,7 @@ interface ContributionHierarchyQuery {
   }
 }
 
-function QueryHierarchy(parameters: object) : ContributionHierarchyQuery {
+function QueryHierarchy(parameters: { [key: string]: string }) : ContributionHierarchyQuery {
   const queryString = Object.keys(parameters)
     .map(k => `${k}=${encodeURIComponent(parameters[k])}`)
     .join('&');
