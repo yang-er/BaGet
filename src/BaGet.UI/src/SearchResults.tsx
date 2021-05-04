@@ -95,7 +95,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
   public render() {
     return this.state.loading && this.state.items.length === 0 ? (
       <div className="dy-5 main-container">
-        <Spinner size={SpinnerSize.large} label="Loading package information..." />
+        <Spinner size={SpinnerSize.large} label="Searching for packages..." />
       </div>
     ) : (
       <div className="page-bottom-4rem">

@@ -15,7 +15,7 @@ class Upload extends React.Component<{}, {}> {
     const pathEnd = window.location.href.indexOf("/connect");
 
     this.baseUrl = window.location.href.substring(0, pathEnd);
-    this.serviceIndexUrl = "https://pkgs.dev.azure.com/tlylz/namomo/_packaging/namofun/nuget/v3/index.json";
+    this.serviceIndexUrl = `${this.baseUrl}/v3/index.json`;
 
     this.preUrl = `<?xml version="1.0" encoding="utf-8"?>
 <configuration>

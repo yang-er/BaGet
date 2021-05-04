@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteRule ^v3/package/(.+)/shields-io.json$ shields-io.php?p=$1 [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.html [QSA,L]
