@@ -1,6 +1,6 @@
 import { config } from './config';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Checkbox, Dropdown, IDropdownOption, SelectableOptionMenuItemType, Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/index';
+import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/index';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import './SearchResults.css';
@@ -258,7 +258,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         guidMap[entry.id] = datum;
       }
 
-      const metricQuery = this.createPost(this.resultsController.signal, {packageIds: Object.keys(guidMap)});
+      const metricQuery = this.createPost(this.resultsController?.signal, {packageIds: Object.keys(guidMap)});
       fetch(config.getMetricUrl(), metricQuery).then(response => {
         return response.ok ? response.json() : null;
       }).then(resultsJson => {
@@ -283,7 +283,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
 
   private normalizeDate(original: string) : Date {
     if (original === undefined) {
-      return undefined;
+      return new Date('undefined');
     } else if (original.startsWith('/Date(')) {
       return new Date(parseInt(original.substr(6, 13)));
     } else {
@@ -291,7 +291,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
     }
   }
 
-  private createPost(signal: AbortSignal, body: object) : RequestInit {
+  private createPost(signal: AbortSignal | undefined, body: object) : RequestInit {
     return {
       signal: signal,
       method: 'POST',

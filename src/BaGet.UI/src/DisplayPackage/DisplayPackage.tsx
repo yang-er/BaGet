@@ -78,6 +78,8 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
     this.versionController = new AbortController();
 
     this.id = props.match.params.id.toLowerCase();
+    this.guid = "";
+    this.fallbackNoVer = false;
     this.version = coerce(props.match.params.version);
     this.state = DisplayPackage.initialState;
   }
@@ -124,15 +126,15 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
     const options = this.createPost(
       this.registrationController.signal,
       QueryHierarchy((() => {
-        const options = {
+        const options : { [param: string] : string } = {
           _a: "package",
           feed: config.feedName,
           package: this.id,
           protocolType: "NuGet",
           view: "versions",
         };
-        if (!this.fallbackNoVer && this.version !== null) {
-          options['version'] = this.props.match.params.version;
+        if (!this.fallbackNoVer && this.version !== null && this.props.match.params.version !== undefined) {
+          options.version = this.props.match.params.version;
         }
         return options;
       })()));
@@ -178,7 +180,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           : false;
 
         const ver : IPackageVersion = {
-          date: undefined,
+          date: new Date(0),
           downloads: 0,
           version: normalizedVersion,
           selected: isCurrent,
@@ -209,10 +211,10 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           versions: versions,
           hasReadme: false,
           readme: "",
-          dependencyGroups: undefined,
-          downloads: undefined,
-          totalDownloads: undefined,
-          downloadUrl: undefined,
+          dependencyGroups: [],
+          downloads: 0,
+          totalDownloads: 0,
+          downloadUrl: '',
           iconUrl: "",
           releaseNotes: "",
           packageType: 0,
@@ -232,11 +234,13 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
         let totalDownload = 0;
         for (const entry of result) {
           var ver = idMaps.get(entry.packageVersionId);
+          if (ver === undefined) continue;
           ver.downloads = entry.downloadCount;
           if (ver.latest) latestDownload = entry.downloadCount;
           totalDownload += entry.downloadCount;
         }
 
+        if (curState.package === undefined) return;
         curState.package.totalDownloads = totalDownload;
         curState.package.downloads = latestDownload;
       });
@@ -258,6 +262,8 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
       }).then(json => {
         const result = json as Registration.IRegistrationPage;
         const pkg = result.items[0];
+
+        if (curState.package === undefined) return;
         curState.package.dependencyGroups = pkg.catalogEntry.dependencyGroups;
         curState.package.downloadUrl = pkg.packageContent;
         curState.package.hasReadme = pkg.catalogEntry.hasReadme;
@@ -415,7 +421,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
 
   private normalizeDate(original: string) : Date {
     if (original === undefined) {
-      return undefined;
+      return new Date('undefined');
     } else if (original.startsWith('/Date(')) {
       return new Date(parseInt(original.substr(6, 13)));
     } else {

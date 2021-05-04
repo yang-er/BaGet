@@ -115,7 +115,7 @@ export class Versions extends React.Component<IVersionsProps, IVersionsState> {
 
   private dateToString(date: Date): string {
     if (date === undefined) {
-      return undefined;
+      return 'undefined';
     } else {
       return date.toLocaleDateString();
     }
