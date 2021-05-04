@@ -7,6 +7,7 @@ let config = {
   feedName: "namofun",
   getNuGetServiceUrl: (): string => `https://pkgs.dev.azure.com/${config.organizationId}/${config.projectId}/_packaging/${config.feedId}/nuget`,
   getHierarchyQueryUrl: (): string => `https://feeds.dev.azure.com/${config.organizationId}/_apis/Contribution/HierarchyQuery/project/${config.projectId}`,
+  getAdoRestfulUrl: (): string => `https://feeds.dev.azure.com/${config.organizationId}/${config.projectId}/_apis/Packaging/Feeds/${config.feedId}/Packages`,
   reverseVersionArray: false
 };
 

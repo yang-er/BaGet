@@ -66,6 +66,7 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
   private id: string;
   private guid: string;
   private version: SemVer | null;
+  private fallbackNoVer: boolean;
 
   private registrationController: AbortController;
   private versionController: AbortController;
@@ -130,8 +131,8 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           protocolType: "NuGet",
           view: "versions",
         };
-        if (this.version !== null) {
-          options['version'] = this.version.raw;
+        if (!this.fallbackNoVer && this.version !== null) {
+          options['version'] = this.props.match.params.version;
         }
         return options;
       })()));
@@ -141,18 +142,26 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
     }).then(json => {
       const hierarchyResult = json as HierarchyResult;
       const packageAll = hierarchyResult.dataProviders['ms.feed.package-hub-data-provider'].packageDetailsResult;
+
       if (packageAll.package === null || packageAll.packageVersion === null) {
-        console.log('package version not found.');
-        return null;
+        if (!this.fallbackNoVer && this.version !== null) {
+          this.fallbackNoVer = true;
+          this.version = null;
+          this.componentDidMount();
+        } else {
+          this.setState({ loading: false });
+        }
+        return;
       }
 
       const packageVersionIds : string[] = [];
+      const normalizedPackageName : string = packageAll.package.normalizedName;
       const version = packageAll.packageVersion;
+      const normalizedCurrentVersion : string = version.normalizedVersion;
       const anyListed = this.anyListed(packageAll.package.versions);
       const latestVersion = this.latestVersion(packageAll.package.versions, anyListed);
       const versions: IPackageVersion[] = [];
       const idMaps = new Map<string, IPackageVersion>();
-      const dependencies: Registration.IDependencyGroup[] = [];
 
       for (const entry of packageAll.package.versions) {
         if (anyListed && !entry.isListed) {
@@ -185,38 +194,14 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
         }
       }
 
-      for (const entry of version.dependencies) {
-        let group : Registration.IDependencyGroup | undefined;
-        for (const groupEntry of dependencies) {
-          if (groupEntry.targetFramework === entry.group) {
-            group = groupEntry;
-            break;
-          }
-        }
-
-        if (group === undefined) {
-          dependencies.push(group = {
-            targetFramework: entry.group,
-            dependencies: [],
-          });
-        }
-
-        group.dependencies.push({
-          id: entry.packageName,
-          range: entry.versionRange,
-        });
-      }
-
       const curState : IDisplayPackageState = {
         loading: false,
         package: {
-          id: version.protocolMetadata.data.title,
+          id: packageAll.package.name,
           lastUpdate: this.normalizeDate(version.publishDate),
           description: version.description,
           projectUrl: version.protocolMetadata.data.projectUrl,
           licenseUrl: version.protocolMetadata.data.licenseUrl,
-          downloadUrl: `${config.getNuGetServiceUrl()}/v3/flat2/${packageAll.package.normalizedName}/${version.version}/${packageAll.package.normalizedName}.${version.version}.nupkg`,
-          dependencyGroups: dependencies,
           authors: version.author,
           tags: version.tags,
           version: version.version,
@@ -224,8 +209,10 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           versions: versions,
           hasReadme: false,
           readme: "",
+          dependencyGroups: undefined,
           downloads: undefined,
           totalDownloads: undefined,
+          downloadUrl: undefined,
           iconUrl: "",
           releaseNotes: "",
           packageType: 0,
@@ -235,9 +222,9 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
 
       this.guid = packageAll.package.id;
 
-      const url = `https://feeds.dev.azure.com/${config.organizationId}/${config.projectId}/_apis/Packaging/Feeds/${config.feedId}/Packages/${this.guid}/VersionMetricsBatch`;
+      const url = `${config.getAdoRestfulUrl()}/${this.guid}/VersionMetricsBatch`;
       const options = this.createPost(this.versionController.signal, { packageVersionIds });
-      fetch(url, options).then(response => {
+      const promise1 = fetch(url, options).then(response => {
         return (response.ok) ? response.json() : null;
       }).then(json => {
         const result = json as VersionMetric[];
@@ -250,20 +237,41 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
           totalDownload += entry.downloadCount;
         }
 
-        const url2 = `https://feeds.dev.azure.com/${config.organizationId}/${config.projectId}/_apis/Packaging/Feeds/${config.feedId}/Packages/${this.guid}/Versions`;
-        fetch(url2, { signal: this.versionController.signal }).then(response => {
-          return (response.ok) ? response.json() : null;
-        }).then(json => {
-          const result = json as CountedResult<TinyPackageVersion>;
-          for (const entry of result.value) {
-            var ver = idMaps.get(entry.id);
-            ver && (ver.date = this.normalizeDate(entry.publishDate));
-          }
+        curState.package.totalDownloads = totalDownload;
+        curState.package.downloads = latestDownload;
+      });
 
-          curState.package.totalDownloads = totalDownload;
-          curState.package.downloads = latestDownload;
-          this.setState(curState);
-        });
+      const url2 = `${config.getAdoRestfulUrl()}/${this.guid}/Versions`;
+      const promise2 = fetch(url2, { signal: this.versionController.signal }).then(response => {
+        return (response.ok) ? response.json() : null;
+      }).then(json => {
+        const result = json as CountedResult<TinyPackageVersion>;
+        for (const entry of result.value) {
+          var ver = idMaps.get(entry.id);
+          ver && (ver.date = this.normalizeDate(entry.publishDate));
+        }
+      });
+
+      const url3 = `${config.getNuGetServiceUrl()}/v3/registrations2/${normalizedPackageName}/page/${normalizedCurrentVersion}/${normalizedCurrentVersion}.json`;
+      const promise3 = fetch(url3, { signal: this.versionController.signal }).then(response => {
+        return (response.ok) ? response.json() : null;
+      }).then(json => {
+        const result = json as Registration.IRegistrationPage;
+        const pkg = result.items[0];
+        curState.package.dependencyGroups = pkg.catalogEntry.dependencyGroups;
+        curState.package.downloadUrl = pkg.packageContent;
+        curState.package.hasReadme = pkg.catalogEntry.hasReadme;
+        curState.package.releaseNotes = pkg.catalogEntry.releaseNotes;
+        curState.package.repositoryUrl = pkg.catalogEntry.repositoryUrl;
+        curState.package.packageType = (pkg.catalogEntry.packageTypes && pkg.catalogEntry.packageTypes.indexOf("DotnetTool") !== -1)
+          ? PackageType.DotnetTool
+          : (pkg.catalogEntry.packageTypes && pkg.catalogEntry.packageTypes.indexOf("Template") !== -1)
+            ? PackageType.DotnetTemplate
+            : PackageType.Dependency;
+      });
+
+      Promise.all([promise1, promise2, promise3]).then(() => {
+        this.setState(curState);
       });
     });
   }
@@ -299,7 +307,12 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
                 <small className="text-nowrap">{this.state.package.version}</small>
               </h1>
             </div>
-
+            {this.fallbackNoVer &&
+              <div className="icon-text alert alert-warning">
+                <Icon iconName="Warning" />
+                &nbsp;The specified version {this.props.match.params.version} was not found. You have been taken to version {this.state.package.version}.
+              </div>
+            }
             <InstallationInfo
               id={this.state.package.id}
               version={this.state.package.normalizedVersion}
