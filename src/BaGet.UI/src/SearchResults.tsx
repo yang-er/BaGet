@@ -19,6 +19,8 @@ interface IPackage {
   version: string;
   publishDate: Date;
   description: string;
+  tags: string[];
+  authors: string[];
 }
 
 interface PackageMetric {
@@ -121,12 +123,15 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                 <div className="col-sm-11">
                   <div>
                     <Link to={`/packages/${value.id}`} className="package-title">{value.id}</Link>
+                    {value.authors.length > 0 &&
+                      <span>by: {value.authors.join(', ')}</span>
+                    }
                   </div>
                   <ul className="info">
                     <li>
                       <span>
                         <Icon iconName="Download" className="ms-Icon" />
-                        &nbsp;{value.totalDownloads === undefined ? 'N/A' : value.totalDownloads.toLocaleString()} total downloads
+                        &nbsp;{value.totalDownloads === undefined ? '0' : value.totalDownloads.toLocaleString()} total downloads
                       </span>
                     </li>
                     <li>
@@ -141,6 +146,14 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
                         &nbsp;Latest version: {value.version}
                       </span>
                     </li>
+                    {value.tags.length > 0 &&
+                      <li>
+                        <span className="tags">
+                          <Icon iconName="Tag" className="ms-Icon" />
+                          {value.tags.join(',').split(',').join(' ')}
+                        </span>
+                      </li>
+                    }
                   </ul>
                   <div>
                     {value.description}
@@ -178,6 +191,12 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
       includePrerelease,
     );
 
+    const url2 = this.buildUrl2(
+      query,
+      0,
+      includePrerelease,
+    );
+
     let resetItems = () =>
       this.setState({
         page: 1,
@@ -194,11 +213,16 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         loading: false,
       });
 
-    this.fetchSearchResults(url, resetItems, setItems);
+    this.fetchSearchResults(url, url2, resetItems, setItems);
   }
 
   private loadMoreItems(): void {
     const url = this.buildUrl(
+      this.props.input,
+      this.state.page * defaultSearchTake,
+      this.state.includePrerelease);
+
+    const url2 = this.buildUrl2(
       this.props.input,
       this.state.page * defaultSearchTake,
       this.state.includePrerelease);
@@ -219,12 +243,14 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
 
     this.fetchSearchResults(
       url,
+      url2,
       showLoading,
       addPage);
   }
 
   private fetchSearchResults(
     url: string,
+    url2: string,
     onStart: () => void,
     onComplete: (results: ISearchResponse) => void
   ): void {
@@ -236,7 +262,8 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
 
     onStart();
 
-    fetch(url, {signal: this.resultsController.signal}).then(response => {
+    const signal = this.resultsController.signal;
+    fetch(url, {signal: signal}).then(response => {
       return response.ok ? response.json() : null;
     }).then(resultsJson => {
       if (!resultsJson) return;
@@ -244,6 +271,7 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
       const results = resultsJson as { value: ResultPackage[] };
       const response : ISearchResponse = { data: [] };
       const guidMap : { [parameter: string]: IPackage } = {};
+      const normMap : { [parameter: string]: IPackage } = {};
 
       for (const entry of results.value) {
         const datum : IPackage = {
@@ -252,24 +280,42 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
           version: entry.versions[0].version,
           publishDate: this.normalizeDate(entry.versions[0].publishDate),
           totalDownloads: 0,
+          tags: [],
+          authors: [],
         };
 
         response.data.push(datum);
         guidMap[entry.id] = datum;
+        normMap[entry.name] = datum;
       }
 
-      const metricQuery = this.createPost(this.resultsController?.signal, {packageIds: Object.keys(guidMap)});
-      fetch(config.getMetricUrl(), metricQuery).then(response => {
+      const metricQuery = this.createPost(signal, {packageIds: Object.keys(guidMap)});
+      const promise1 = fetch(config.getMetricUrl(), metricQuery).then(response => {
         return response.ok ? response.json() : null;
       }).then(resultsJson => {
-
         if (resultsJson) {
           const results = resultsJson as PackageMetric[];
           for (const entry of results) {
             guidMap[entry.packageId].totalDownloads = entry.downloadCount;
           }
         }
+      });
 
+      const promise2 = fetch(url2, {signal: signal}).then(response => {
+        return response.ok ? response.json() : null;
+      }).then(resultsJson => {
+        if (resultsJson) {
+          const results = resultsJson as ISearchResponse;
+          for (const entry of results.data) {
+            if (normMap.hasOwnProperty(entry.id)) {
+              normMap[entry.id].tags = entry.tags;
+              normMap[entry.id].authors = entry.authors;
+            }
+          }
+        }
+      });
+
+      Promise.all([promise1, promise2]).then(() => {
         onComplete(response);
       });
     })
@@ -305,6 +351,35 @@ class SearchResults extends React.Component<ISearchResultsProps, ISearchResultsS
         return header;
       })(),
     };
+  }
+
+  private buildUrl2(
+    query: string,
+    skip: number,
+    includePrerelease: boolean
+  ): string {
+    const parameters: { [parameter: string]: string } = {
+      semVerLevel: "2.0.0",
+      take: defaultSearchTake.toString()
+    };
+
+    if (query && query.length !== 0) {
+      parameters.q = query;
+    }
+
+    if (skip !== 0) {
+      parameters.skip = skip.toString();
+    }
+
+    if (includePrerelease) {
+      parameters.prerelease = 'true';
+    }
+
+    const queryString = Object.keys(parameters)
+      .map(k => `${k}=${encodeURIComponent(parameters[k])}`)
+      .join('&');
+
+    return `${config.getNuGetServiceUrl()}/v3/query2/?${queryString}`;
   }
 
   private buildUrl(

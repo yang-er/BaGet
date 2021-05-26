@@ -386,11 +386,11 @@ class DisplayPackage extends React.Component<IDisplayPackageProps, IDisplayPacka
               <ul className="list-unstyled ms-Icon-ul">
                 <li>
                   <Icon iconName="Download" className="ms-Icon" />
-                  {this.state.package.totalDownloads || 'N/A'} total downloads
+                  {this.state.package.totalDownloads || '0'} total downloads
                 </li>
                 <li>
                   <Icon iconName="GiftBox" className="ms-Icon" />
-                  {this.state.package.downloads || 'N/A'} downloads of latest version
+                  {this.state.package.downloads || '0'} downloads of latest version
                 </li>
               </ul>
             </div>
